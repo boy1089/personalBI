@@ -9,9 +9,6 @@ import numpy as np
 import gc
 
 import pandas as pd
-path = r'/Volumes/T7/auto diary/data/audio'
-
-files_audio = glob.glob(f'{path}/*.wav')
 
 def delete_me(obj):
     referrers = gc.get_referrers(obj)
@@ -66,13 +63,16 @@ def analyzeAndPlotMFCC(file, offset = 0, duration = 120, savefile = None):
         del(obj)
 
     gc.collect()
-    return characteristicOfContext_average_profile, characteristicOfContext_std_profile, characteristicOfContext_average, characteristicOfContext_std
+    return list(characteristicOfContext_average_profile), list(characteristicOfContext_std_profile), characteristicOfContext_average, characteristicOfContext_std
 
+path = r'/Volumes/T7/auto diary/data/audio'
+files_audio = glob.glob(f'{path}/*.m4a')
+files_audio.sort(reverse= False)
+print(files_audio)
 print(files_audio)
 
 path_save = r'/Volumes/T7/auto diary/dataAnalyzed/mfcc analysis'
 duration_crop = 120
-
 
 averageProfileList = []
 stdProfileList = []
@@ -84,7 +84,7 @@ timeList = []
 datetimeList = []
 from datetime import datetime
 
-for i, file in enumerate(files_audio[1:]):
+for i, file in enumerate(files_audio[2:]):
 
     try :
         duration = librosa.get_duration(filename=file)
@@ -92,9 +92,6 @@ for i, file in enumerate(files_audio[1:]):
         date = filename[:8]
         time = filename[9:15]
         datetime2 = pd.to_datetime(filename[:15].replace('_', '-'))
-        print(datetime2 +pd.Timedelta(minutes = 2))
-
-        print('aa')
 
         for j in range(int(duration / duration_crop)+1):
             print(f'processing {filename}, {j} / {int(duration / duration_crop)+1} th operation')
@@ -112,11 +109,15 @@ for i, file in enumerate(files_audio[1:]):
             gc.collect(1)
             gc.collect(2)
 
-        df = pd.DataFrame(np.asarray([filenameList, datetimeList, averageProfileList])).T
-        df.to_csv(f'{path_save}/averageProfile.csv')
+        df2 = pd.DataFrame(np.asarray([filenameList, datetimeList]))
+        df3 = pd.DataFrame(np.asarray(averageProfileList))
+        df_average = pd.concat([df2.T, df3], axis=1)
 
-        df = pd.DataFrame(np.asarray([filenameList, datetimeList, stdProfileList])).T
-        df.to_csv(f'{path_save}/stdProfile.csv')
+        df_average.to_csv(f'{path_save}/averageProfile.csv')
+
+        df3 = pd.DataFrame(np.asarray(stdProfileList))
+        df_std = pd.concat([df2.T, df3], axis=1)
+        df_std.to_csv(f'{path_save}/stdProfile.csv')
 
         df = pd.DataFrame(np.asarray([filenameList,datetimeList, averageList, stdList])).T
         df.columns = ['filename', 'datetime', 'average', 'std']
@@ -125,4 +126,5 @@ for i, file in enumerate(files_audio[1:]):
         print('aa')
 
     except :
+        print(f'{i} th file is passed')
         pass
