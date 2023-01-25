@@ -2,8 +2,9 @@
 
 import pandas as pd
 import os
-import util
 import glob
+
+import src.util as util
 
 
 

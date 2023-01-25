@@ -199,107 +199,30 @@ for i, column in enumerate(class1.columns):
 
 
 # class1_time = randomizeValues(class1_time)
-# for j in range(24):
-    # class1_time = class1[class1['time'] == j]
-    # print(j)
-    # plt.scatter(class1_time['Android'], class1_time['Chrome'], s = 3, label = j, c = 'blue', alpha = (j+5)/30)
-    # plt.scatter(class1_time['Android'], class1_time['Chrome'], s = 3, label = j, c = [j/24]* len(class1_time), cmap = plt.cm.autumn)
+for j in range(24):
+    class1_time = class1[class1['time'] == j]
+    print(j)
+    plt.scatter(class1_time['Android'], class1_time['Chrome'], s = 3, label = j, c = 'blue', alpha = (j+5)/30)
+    plt.scatter(class1_time['Android'], class1_time['Chrome'], s = 3, label = j, c = [j/24]* len(class1_time), cmap = plt.cm.autumn)
 
 # plt.scatter(class1['Android'],  class1['Chrome'], s = 10, c = class1['time'], cmap = plt.cm.seismic, alpha = 0.5)
 # plt.colorbar()
 
+print(resultCopy)
+import calmap
 
+for i, date in enumerate(dates):
+    column = 'Android'
+    classification = 0
+    try :
+        df_temp3 = resultCopy[date].copy()
+        df_temp3 = df_temp3.fillna(0)
+        df_temp3 = df_temp3[df_temp3['classification'] == classification ]
+        plt.scatter(df_temp3['time'], [i]* len(df_temp3), alpha = df_temp3[column]/ df_temp3[column].max(), c = 'blue')
 
+    except : pass
 
-
-import numpy as np
-from sklearn.cluster import MeanShift
-from sklearn.cluster import estimate_bandwidth
-
-df_clustering = df_appCounts.copy()
-data = np.asarray(df_clustering.values).T[:2].T
-print(counts[['Android', 'Chrome']].values)
-# data = np.asarray(counts[['Chrome', 'Android']].values)
-bandwidth = estimate_bandwidth(data)
-bandwidth  = 12
-meanshift = MeanShift(bandwidth = bandwidth)
-labels = meanshift.fit_predict(data)
-# plt.plot(data[:, 0])
-setOfLabel = util.getSetOfItem(labels)
-
-for i, label in enumerate(setOfLabel[:5]):
-    indices = util.find_indices(labels, label)
-    plt.scatter(indices, data.T[1][indices], label = label)
-
-plt.xlabel('days')
-plt.ylabel('chrome usage')
-
-plt.legend()
-plt.plot(data)
-print(data[[0, 3, 4]])
-print(df_appCounts.columns)
-
-plt.scatter(data.T[0], data.T[1])
-
-plt.plot(labels)
-
-data2 = data.T[9]
-bandwidth  = 1
-meanshift = MeanShift(bandwidth = bandwidth)
-labels = meanshift.fit_predict(data2.reshape(-1, 1))
-setOfLabel = util.getSetOfItem(labels)
-for i, label in enumerate(setOfLabel[:5]):
-    indices = util.find_indices(labels, label)
-    plt.scatter(indices, data2[indices], label = label)
-plt.legend()
-
-print(df_clustering)
-plt.plot(data.T[0])
-
-indices = df_clustering.index
-print(setOfLabel[0])
-print(indices[util.find_indices(labels, setOfLabel[4])])
-
-
-df_usage = getUsageData(df)
-df_appCounts = calculateCountsOfDF(df_usage[df_usage['type'] == 'Android'], dateRange = dates, column = 'note')
-# yearplotCounts(df_appCounts)
-
-df_appCounts = df_appCounts.fillna(0)
-sum = df_appCounts.sum()
-df_appCounts = df_appCounts[sum.sort_values(ascending=True).index]
-
-print(df_appCounts.columns[-2:-1])
-index = -7
-df_outlier, outlier = AD.detectAnomaly(df_appCounts, df_appCounts.columns[index-1:index])
-AD.plotAnomaly(df_outlier[df_outlier.columns[index-1:index]], outlier)
-plt.tight_layout()
-
-plt.imshow(np.log(data[:, :20]))
-
-
-print('aa')
-
-df_appCounts2 = df_appCounts.copy()
-df_appCounts2.columns = range(len(df_appCounts.columns))
-
-df_appCounts2 = df_appCounts2.clip(0, 1)
-
-fig, ax = plt.subplots(figsize = (30, 50))
-for j in range(len(df_appCounts2)):
-    data = df_appCounts2.iloc[j]
-    data = [x for x in data.index if data[x] !=0]
-    events = ax.eventplot(data, lineoffsets= j, orientation='vertical')
-print(df_appCounts.columns[164])
-# ax.set_xticklabels(df_appCounts.columns)
-plt.sca(ax)
-plt.yticks(range(len(df_appCounts.columns)), df_appCounts.columns)
-# plt.grid(axis = 'x', which = 'minor')
-plt.grid()
-
-plt.tight_layout()
-
-plt.savefig(f'{path_save}/20230111_appUsageAnalysis.png')
+    plt.title(f'{column}_{classification}')
 
 #
 #

@@ -11,6 +11,8 @@ import glob
 
 path = r"D:\python\7. logger2\logger\data\voice"
 path = r"/Volumes/T7/auto diary/pythonProject/data/audio"
+path = r'/Volumes/T7/auto diary/data/audio'
+
 os.chdir(path)
 files = glob.glob(path + '/*.wav')
 

@@ -3,7 +3,7 @@ import numpy as np
 import datetime
 import matplotlib.colors as mcolors
 
-path_log = "../data/*"
+path_log = r"/Volumes/T7/auto diary/data/*"
 
 
 dataType_sensor = 1
