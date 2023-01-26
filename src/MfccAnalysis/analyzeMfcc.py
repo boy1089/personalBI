@@ -10,6 +10,7 @@ import gc
 
 import pandas as pd
 
+import src.util as util
 def delete_me(obj):
     referrers = gc.get_referrers(obj)
     for referrer in referrers:
@@ -65,11 +66,30 @@ def analyzeAndPlotMFCC(file, offset = 0, duration = 120, savefile = None):
     gc.collect()
     return list(characteristicOfContext_average_profile), list(characteristicOfContext_std_profile), characteristicOfContext_average, characteristicOfContext_std
 
-path = r'/Volumes/T7/auto diary/data/audio'
-files_audio = glob.glob(f'{path}/*.m4a')
+
+
+
+
+
+
+path_audio = r'/Volumes/T7/auto diary/data/audio'
+path_summary = r'/Volumes/T7/auto diary/dataAnalyzed/mfcc analysis/average, std.csv'
+path_average_profile = r'/Volumes/T7/auto diary/dataAnalyzed/mfcc analysis/averageProfile.csv'
+path_std_profile = r'/Volumes/T7/auto diary/dataAnalyzed/mfcc analysis/stdProfile.csv'
+
+df_summary = pd.read_csv(path_summary)
+df_average_profile = pd.read_csv(path_average_profile)
+df_std_profile = pd.read_csv(path_std_profile)
+df_average_profile = df_average_profile[df_average_profile.columns[1:]]
+df_std_profile = df_std_profile[df_std_profile.columns[1:]]
+
+
+setOfFilename = util.getSetOfItem(df_summary['filename'])
+df_average_profile.columns = range(df_average_profile.columns.size)
+df_std_profile.columns = range(df_std_profile.columns.size)
+
+files_audio = glob.glob(f'{path_audio}/*.m4a')
 files_audio.sort(reverse= False)
-print(files_audio)
-print(files_audio)
 
 path_save = r'/Volumes/T7/auto diary/dataAnalyzed/mfcc analysis'
 duration_crop = 120
@@ -82,20 +102,27 @@ filenameList = []
 dateList = []
 timeList = []
 datetimeList = []
-from datetime import datetime
+statusList = []
 
+import time as time2
 for i, file in enumerate(files_audio[2:]):
+    filename = file.split('/')[-1]
+    if(filename in setOfFilename):
+        print(f'{filename} is already processed!')
+        continue
 
     try :
         duration = librosa.get_duration(filename=file)
-        filename = file.split('/')[-1]
         date = filename[:8]
         time = filename[9:15]
         datetime2 = pd.to_datetime(filename[:15].replace('_', '-'))
 
         for j in range(int(duration / duration_crop)+1):
-            print(f'processing {filename}, {j} / {int(duration / duration_crop)+1} th operation')
+            start = time2.time()
             average_profile, std_profile, average, std = analyzeAndPlotMFCC(file, offset=duration_crop*j, duration=120, savefile=f'{path_save}/{filename}_{j*duration_crop/60} min.png')
+
+            time1 = time2.time()
+            status = j == int(duration / duration_crop)
             averageProfileList.append(average_profile)
             stdProfileList.append(std_profile)
             averageList.append(average)
@@ -104,27 +131,42 @@ for i, file in enumerate(files_audio[2:]):
             dateList.append(date)
             timeList.append(time)
             datetimeList.append(datetime2 + pd.Timedelta(seconds = j * duration_crop))
+            statusList.append(status)
+            end = time2.time()
+            print(f'processing {filename}, {j} / {int(duration / duration_crop)+1} th operation done, time elapsed : {end - start}, time1 : {time1 - start}')
+
             # plt.close()
-            gc.collect(0)
-            gc.collect(1)
-            gc.collect(2)
 
-        df2 = pd.DataFrame(np.asarray([filenameList, datetimeList]))
+
+        df_prefix = pd.DataFrame(np.asarray([filenameList, datetimeList]))
+
         df3 = pd.DataFrame(np.asarray(averageProfileList))
-        df_average = pd.concat([df2.T, df3], axis=1)
+        df_average = pd.concat([df_prefix.T, df3], axis=1)
+        df_average.columns = range(df_average.columns.size)
 
-        df_average.to_csv(f'{path_save}/averageProfile.csv')
+        df_average_profile = pd.concat([df_average_profile, df_average], axis = 0)
+        df_average_profile.to_csv(f'{path_save}/averageProfile.csv')
 
         df3 = pd.DataFrame(np.asarray(stdProfileList))
-        df_std = pd.concat([df2.T, df3], axis=1)
-        df_std.to_csv(f'{path_save}/stdProfile.csv')
+        df_std = pd.concat([df_prefix.T, df3], axis=1)
+        df_std.columns = range(df_std.columns.size)
 
-        df = pd.DataFrame(np.asarray([filenameList,datetimeList, averageList, stdList])).T
-        df.columns = ['filename', 'datetime', 'average', 'std']
-        df.to_csv(f'{path_save}/average, std.csv')
+        df_std_profile = pd.concat([df_std_profile, df_std], axis = 0)
+        df_std_profile.to_csv(f'{path_save}/stdProfile.csv')
 
-        print('aa')
+        df_summary_temp = pd.DataFrame(np.asarray([filenameList,datetimeList, averageList, stdList, statusList])).T
+        df_summary_temp.columns = ['filename', 'datetime', 'average', 'std', 'status']
+        df_summary = pd.concat([df_summary, df_summary_temp], axis = 0)
+
+        df_summary.to_csv(f'{path_save}/average, std.csv')
+
+        gc.collect(0)
+        gc.collect(1)
+        gc.collect(2)
 
     except :
         print(f'{i} th file is passed')
         pass
+
+
+    print('aa')
