@@ -8,12 +8,16 @@ path_average_profile = r'/Volumes/T7/auto diary/dataAnalyzed/mfcc analysis/avera
 df = pd.read_csv(path_average_std)
 
 df2 = df.copy()
-df2.index = pd.to_datetime(df[df.columns[2]])
+df2.index = pd.to_datetime(df[df.columns[-4]])
+
+print(df.columns)
 df2 = df2.sort_index()
 
 for j in range(3):
     df3 = df2.between_time(f'{j*8}:00', f'{(j+1)*8 -1}:00')
     plt.scatter(df3['average'], df3['std'], s = 1, label = j)
+
+print(df2)
 
 plt.legend()
 plt.xlim(-30, 0)

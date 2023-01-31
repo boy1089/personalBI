@@ -2,6 +2,7 @@
 import numpy as np
 import datetime
 import matplotlib.colors as mcolors
+import math
 
 path_log = r"/Volumes/T7/auto diary/data/*"
 
@@ -56,7 +57,9 @@ def getDates(base, dateRange = 14 ):
     return dates
 
 def getSetOfItem(item):
-    return list(set(item))
+    list2 = list(set(item))
+    # list2 = [x for x in list2 if not math.isnan(x)]
+    return list2
 
 def find_indices(list_to_check, item_to_find):
     indices = []

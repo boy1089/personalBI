@@ -109,6 +109,7 @@ def analyzeCountsLocationOnDate(df, date, setOfType, locationClassification = {}
     df_temp = df_temp.sort_index()
     df_temp['longitude'] = df_temp['longitude'].fillna(method='backfill').fillna(method='ffill')
     df_temp['latitude'] = df_temp['latitude'].fillna(method='backfill').fillna(method='ffill')
+    print(df_temp)
     df_temp, locationClassification = LA.classifyLocations(df_temp, locationClassification)
     counts = pd.DataFrame(index=setOfType)
     for i in range(24):
@@ -160,19 +161,38 @@ df = dataLoader.loadData()
 
 # fig, ax = plt.subplots()
 
+path_audio_average_std = r'/Volumes/T7/auto diary/dataAnalyzed/mfcc analysis/average, std.csv'
+df_audio = pd.read_csv(path_audio_average_std)
+
+print(df_audio.iloc[:100].to_string())
+df_audio.index = pd.to_datetime(df_audio['datetime'])
+
+date = '2022-08-01'
+
+fig, ax = plt.subplots(figsize = (12,8))
+ax2 = ax.twinx()
+ax.plot(df_audio[date]['average'].sort_index())
+ax2.plot(df_audio[date]['std'].sort_index(), c = 'red')
+ax.set_ylabel('average')
+ax2.set_ylabel('std', c = 'red')
+
 dates = util.getDates(datetime.datetime(2022, 8, 10), 200)
 print('aa')
 
+print(df['2022-08-05'])
 setOfType = getSetOfItemsOfType(df)
 resultOfCountAndLocation = pd.DataFrame()
 
 locationClassification = {}
-for i, date in enumerate(dates[100:200]):
+
+for i, date in enumerate(dates[180:200]):
     print(date)
     try :
+
         result, locationClassification = analyzeCountsLocationOnDate(df, date, setOfType, locationClassification)
         resultOfCountAndLocation = pd.concat([resultOfCountAndLocation, result])
     except :
+        print(f"{date} passed")
         pass
 
 resultCopy = resultOfCountAndLocation.copy()
@@ -197,32 +217,62 @@ class1 = resultCopy[resultCopy['classification'] == 1]
 for i, column in enumerate(class1.columns):
     class1[column] = class1[column] + random.ranf(len(class1)) / 2 - 0.25
 
+print(resultCopy)
+print(df_audio)
 
-# class1_time = randomizeValues(class1_time)
-for j in range(24):
-    class1_time = class1[class1['time'] == j]
-    print(j)
-    plt.scatter(class1_time['Android'], class1_time['Chrome'], s = 3, label = j, c = 'blue', alpha = (j+5)/30)
-    plt.scatter(class1_time['Android'], class1_time['Chrome'], s = 3, label = j, c = [j/24]* len(class1_time), cmap = plt.cm.autumn)
+df_audio = df_audio.drop(df_audio.columns[:6], axis = 1)
 
-# plt.scatter(class1['Android'],  class1['Chrome'], s = 10, c = class1['time'], cmap = plt.cm.seismic, alpha = 0.5)
-# plt.colorbar()
+df_audio.index = pd.to_datetime(df_audio['datetime'])
+df_audio = df_audio.sort_index()
+
+plt.plot(df_audio['average'])
 
 print(resultCopy)
-import calmap
 
-for i, date in enumerate(dates):
-    column = 'Android'
-    classification = 0
-    try :
-        df_temp3 = resultCopy[date].copy()
-        df_temp3 = df_temp3.fillna(0)
-        df_temp3 = df_temp3[df_temp3['classification'] == classification ]
-        plt.scatter(df_temp3['time'], [i]* len(df_temp3), alpha = df_temp3[column]/ df_temp3[column].max(), c = 'blue')
+average_list = []
+std_list = []
+#merge usage and audio
 
-    except : pass
+for i, index in enumerate(resultCopy.index):
+    print(index)
+    df_audio_temp = df_audio[str(index)[:-6]]
+    average_average = df_audio_temp['average'].mean()
+    # average_std = df_audio_temp['average'].std()
+    average_std = df_audio_temp['std'].mean()
 
-    plt.title(f'{column}_{classification}')
+    average_list.append(average_average)
+    std_list.append(average_std)
+
+resultCopy['audio_average'] = average_list
+resultCopy['audio_std'] = std_list
+
+print(resultCopy.columns)
+
+print(resultCopy['classification'])
+setOfClassification = util.getSetOfItem(resultCopy['classification'])
+import math
+setOfClassification = [x for x in setOfClassification if not math.isnan((x))]
+
+print(resultCopy[resultCopy['classification'] == 0])
+print(setOfClassification)
+
+for i, classification in enumerate(setOfClassification):
+    df_temp = resultCopy[resultCopy['classification'] == classification]
+    plt.scatter(df_temp['audio_average'], df_temp['audio_std'], label = classification)
+plt.legend()
+
+print(resultCopy.columns)
+x = '검색'
+y = 'audio_std'
+for i, classification in enumerate(setOfClassification[:4]):
+    df_temp = resultCopy[resultCopy['classification'] == classification]
+    plt.scatter(df_temp[x], df_temp[y], label = classification)
+plt.legend()
+plt.xlabel(x)
+plt.ylabel(y)
+
+
+print(resultCopy[resultCopy['classification'] == 3].to_string())
 
 #
 #

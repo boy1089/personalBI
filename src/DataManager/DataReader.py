@@ -2,7 +2,7 @@ import itertools
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import util
+import src.util as util
 import glob
 import matplotlib
 import zipfile
@@ -17,8 +17,8 @@ import DataSaver
 
 import calmap
 import sys
-from wordcloud import WordCloud
-from konlpy.tag import Twitter
+# from wordcloud import WordCloud
+# from konlpy.tag import Twitter
 from collections import Counter
 
 
@@ -286,41 +286,41 @@ class DataReader:
         return df
 
     def mergeData(self):
-        imageData = self.readData(util.dataType_image)
+        # imageData = self.readData(util.dataType_image)
         sensorData = self.readData(util.dataType_sensor)
         prevData = self.readData(util.dataType_prev)
-        accountData = self.readData(util.dataType_account)
+        # accountData = self.readData(util.dataType_account)
         phoneCallData = self.readData(util.dataType_phoneCall)
 
         # mergedData = pd.concat([sensorData, prevData, accountData, imageData, phoneCallData])
 
         googleData = self.readData(util.dataType_google)
-        print('aa')
-        imageData = imageData.loc[pd.notnull(imageData.index)]
-
+        # imageData = imageData.loc[pd.notnull(imageData.index)]
 
         phoneCallData['time'] = phoneCallData.index
         phoneCallData = phoneCallData.set_index('time')
-        print(phoneCallData.index)
-
-        print(sensorData)
         sensorData2 = sensorData[sensorData.index > '2021']
-        print(sensorData)
-        print(accountData)
         sensorData2 = sensorData2[~sensorData2.index.duplicated(keep = 'first')]
+        sensorData2 = sensorData2[sensorData2.columns[:-2]]
 
         # mergedData = pd.concat([sensorData2, accountData])
         #
         # mergedData = pd.concat([sensorData, prevData, accountData, imageData, googleData, phoneCallData], join = 'inner')
 
-        mergedData = pd.concat([ prevData, accountData, imageData, googleData, phoneCallData])
+        # mergedData = pd.concat([ prevData, accountData, imageData, googleData, phoneCallData])
+        # mergedData = pd.concat([ prevData, accountData, googleData, phoneCallData])
+        print('aa')
+        print(prevData.columns)
+        print(sensorData2.columns)
+        sensorData3 = pd.concat([prevData, sensorData2])
+        print(sensorData3)
+        mergedData = pd.concat([  sensorData3, googleData, phoneCallData])
 
         return mergedData
 
 
 if __name__ =="__main__":
     dataReader = DataReader()
-
     data = dataReader.mergeData()
     dataSaver = DataSaver.DataSaver()
     dataSaver.saveData(data, 'raw2.csv')
